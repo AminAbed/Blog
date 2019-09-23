@@ -1,10 +1,39 @@
 from flask import Flask, render_template, url_for, flash, redirect
 from forms import RegistrationForm, LoginForm
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 app = Flask(__name__)
 # In order to use session in flask you need to set the secret key in your application settings.
 # SECRET_KEY is a random key used to encrypt your cookies and save send them to the browser.
 app.config['SECRET_KEY'] = '8f9940aec084fcfa3c9cda754bf619d2'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+
+db = SQLAlchemy(app)
+
+
+class User(db.Model):
+    __tablename__ = 'user'      # not necessary, default value is 'user'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), unique=True, nullable = False)
+    email = db.Column(db.String(120), unique=True, nullable = False)
+    imageFile = db.Column(db.String(20), nullable = False, default='default.jpg')
+    password = db.Column(db.String(60), nullable = False)
+    posts = db.relationship('Post', backref='author', lazy=True)
+
+    def __repr__(self):
+        return f"User('{self.username}', '{self.email}', '{self.imageFile}')"
+
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable = False)
+    datePosted = db.Column(db.DateTime, nullable = False, default=datetime.utcnow)
+    content = db.Column(db.Text, nullable = False)
+    userId = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f"Post('{self.title}', '{self.datePosted}')"
+
 
 posts = [
     {
